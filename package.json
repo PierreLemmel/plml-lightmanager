@@ -1,0 +1,23 @@
+{
+  "name": "plml-lightmanager",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build-react": "cd front-app && npm install && npm run build",
+    "build": "npm run build-react",
+    "serve": "serve front-app/build",
+    "serve-dev": "cd front-app && npm install && npm start",
+    "start": "npm run serve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PierreLemmel/plml-lightmanager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "serve": "^12.0.1"
+  }
+}

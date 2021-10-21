@@ -1,5 +1,3 @@
-import React from "react";
-
 export class Enttec {
     static vendorId = 0x403; //1027
     static openDmxProductId = 0x6001; //24577
@@ -13,31 +11,20 @@ export class Enttec {
 export class OpenDmxDevice {
     
     private readonly _port: SerialPort;
-    private readonly _buffer;
+    private readonly _buffer: Buffer;
     
 
-    constructor(port: SerialPort) {
+    public constructor(port: SerialPort) {
         this._port = port;
         this._buffer = Buffer.alloc(513);
     }
 
     private _opened: boolean = false;
-    get opened(): boolean {
+    public get opened(): boolean {
         return this._opened;
     }
 
-    private _loopbackInterval: NodeJS.Timeout|null = null;
-    get isSending(): boolean {
-        return this._loopbackInterval !== null;
-    }
-
-    private _refreshRate = 10.0;
-    get refreshRate(): number {
-        return this._refreshRate;
-    }
-
-
-    async open(): Promise<void> {
+    public async open(): Promise<void> {
 
         const openOptions: OpenPortOptions = {
             baudRate: 250000,
@@ -47,27 +34,34 @@ export class OpenDmxDevice {
             flowControl: "none"
         };
 
-        await this._port.open(openOptions);
-
-        this._opened = true;
+        try {
+            await this._port.open(openOptions);
+            this._opened = true;
+        }
+        catch (e: unknown) {
+            console.warn(e);
+        }
     }
 
-    async close(): Promise<void> {
-        await  this._port.close();
-        this._opened = false;
+
+    public async close(): Promise<void> {
+
+        try {
+            await this._port.close();
+            this._opened = false;
+        }
+        catch (e: unknown) {
+            console.warn(e);
+        }
     }
 
-    startSending(): void {
-        this._loopbackInterval = setInterval(() => {
-            this.sendFrame();
-        }, 1000 / this._refreshRate)
+
+    public write(source: Buffer, offset: number) {
+        source.copy(this._buffer, offset);
     }
 
-    setChannel(channel: number, value: number){
-        this._buffer[channel] = value;
-    }
-
-    private async sendFrame(): Promise<void> {
+    
+    public async sendFrame(): Promise<void> {
 
         if (this._port.writable.locked) {
             return;
@@ -82,32 +76,4 @@ export class OpenDmxDevice {
         writer.releaseLock();
     }
 
-    stopSending(): void {
-        
-        if (this._loopbackInterval !== null) {
-            clearInterval(this._loopbackInterval);
-            this._loopbackInterval = null;
-        }
-    }
 }
-
-export interface OpenDmxContextProps {
-    readonly hasSerial: boolean;
-    readonly hasDevice: boolean;
-
-    readonly portOpened: boolean;
-    readonly isSending: boolean;
-
-    readonly start: () => Promise<void>;
-    readonly stop: () => Promise<void>;
-};
-
-export const OpenDmxContext = React.createContext<OpenDmxContextProps>({
-    hasSerial: true,
-    hasDevice: false,
-
-    portOpened: false,
-    isSending: false,
-    start: () => Promise.resolve(),
-    stop: () => Promise.resolve(),
-});

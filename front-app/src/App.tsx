@@ -1,14 +1,50 @@
 import { useState } from 'react';
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 import './App.css';
-import SerialControl from './Components/SerialControl';
-import ShowControl from './Components/ShowControl';
-import { useEffectAsync } from './Helpers/Hooks';
-import { Enttec, OpenDmxContext, OpenDmxContextProps, OpenDmxDevice } from './Services/Dmx/OpenDmx';
+import SerialControl from './Components/Dmx/SerialControl';
+import ShowControl from './Pages/ShowControl';
+import { useEffectAsync } from './Core/React/Hooks';
+import { Enttec, OpenDmxDevice } from './Services/Dmx/OpenDmx';
+import { LightManagementContext, LightManagementContextProps } from './Components/Contexts/Contexts';
+import { improvibarLightingPlan } from './Services/Dmx/FixturesDatabase';
+import { LightManager, LightManagerOptions } from './Services/Dmx/LightManagement';
+import { StageLightingPlan } from './Services/Dmx/Dmx512';
 
 const App = () => {
 
     const [device, setDevice] = useState<OpenDmxDevice|null>(null);
+    const [lightManager, setLightManager] = useState<LightManager|null>(null);
+    const [lightingPlan, setLightingPlan] = useState<StageLightingPlan>({
+        name: "UNINITIALIZED",
+        fixtures: [
+
+        ]
+    });
+
+    const getLightManagerOptions = (): Partial<LightManagerOptions> => {
+        return {
+
+        };
+    }
+
+    const onPortSelected = (port: SerialPort) => {
+        
+        const newDevice = new OpenDmxDevice(port);
+        setDevice(newDevice);
+        
+        const newLightManager = new LightManager(lightingPlan, newDevice, getLightManagerOptions())
+        setLightManager(newLightManager);
+    }
+
+    const onLightingPlanLoaded = (newPlan: StageLightingPlan) => {
+        setLightingPlan(newPlan);
+
+        if (device) {
+            const newLightManager = new LightManager(newPlan, device, getLightManagerOptions())
+            setLightManager
+        }
+    }
+
     const [portOpened, setPortOpened] = useState<boolean>(false);
     const [isSending, setIsSending] = useState<boolean>(false);
 
@@ -24,46 +60,58 @@ const App = () => {
 
     }, []);
 
+    const hasSerial = navigator.serial !== undefined;
+    const hasDevice = device !== null;
+
+    const canStart = hasSerial && hasDevice && !portOpened && !isSending
     const start = async () => {
-        if (!device) {
+        if (!lightManager || !device) {
             return;
         }
 
-        await device.open();
+        await lightManager.start();
         setPortOpened(device.opened);
-
-        device.startSending();
-        setIsSending(device.isSending);
+        setIsSending(lightManager.isSending);
     };
 
+    const canStop = hasSerial && hasDevice && portOpened && isSending;
     const stop = async () => {
-        if (!device) {
+        if (!lightManager || !device) {
             return;
         }
 
-        device.stopSending();
-        setIsSending(device.isSending);
-
-        await device.close();
+        await lightManager.stop();
+        setIsSending(lightManager.isSending);
         setPortOpened(device.opened);
     }
 
-    const openDmxContext: OpenDmxContextProps = {
-        hasSerial: navigator.serial !== undefined,
-        hasDevice: device !== null,
+    
 
-        portOpened: portOpened,
-        isSending: isSending,
-
-        start: start,
-        stop: stop,
-    };
+    const lightManagementContext: LightManagementContextProps = {
+        openDmx: {
+            hasSerial,
+            hasDevice,
+            portOpened,
+            isSending
+        },
+        lightManagement: {
+            canStart,
+            start,
+    
+            canStop,
+            stop,
+        },
+        setup: {
+            lightingPlan: lightingPlan
+        }
+    }
 
     const onSerialPortSelected = (port: SerialPort) => setDevice(new OpenDmxDevice(port));
 
     return <div>
-        <SerialControl onSerialPortSelected={onSerialPortSelected} />
-        <OpenDmxContext.Provider value={openDmxContext}>
+        {!device && <SerialControl onSerialPortSelected={onSerialPortSelected} />}
+
+        <LightManagementContext.Provider value={lightManagementContext}>
 
             <BrowserRouter>
                 <Switch>
@@ -72,7 +120,7 @@ const App = () => {
                 </Switch>
             </BrowserRouter>
 
-        </OpenDmxContext.Provider>
+        </LightManagementContext.Provider>
     </div>;
 }
 export default App;

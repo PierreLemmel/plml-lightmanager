@@ -1,51 +1,39 @@
-import { ByteChannelTypes, Color, ColorChannelTypes, StageLightingPlan } from './Dmx512';
+import { byte, smoothDamp, Velocity } from '../../Core/Helpers/Mathf';
+import { getValue, ValueProvider } from '../../Core/Helpers/Utils';
+import { Model } from '../../Core/Models/Models';
+import { Chans, Color, Fixtures, StageLightingPlan } from './Dmx512';
 import { OpenDmxDevice } from './OpenDmx';
 
-type ValueProvider<T> = T|(() => T)
-
-export type ByteProvider = ValueProvider<number>;
+export type ByteProvider = ValueProvider<byte>;
 export type ColorProvider = ValueProvider<Color>;
 
-type ChanValueSource<TChan, TProvider> = {
+interface ChanValueSource<TChan, TProvider> {
     readonly chan: TChan;
     readonly value: TProvider;
 }
-type ByteSource = ChanValueSource<ByteChannelTypes, ByteProvider>;
-type ColorSource = ChanValueSource<ColorChannelTypes, ColorProvider>;
+
+interface ByteSource extends ChanValueSource<Chans.ByteChannelType, ByteProvider> { }
+interface ColorSource extends ChanValueSource<Chans.ColorChannelType, ColorProvider> { }
+
 
 type ValueSource = ByteSource | ColorSource;
 
-export interface Scene {
-    readonly name: string;
-    readonly key: string;
+type SceneElementsProvider = ValueProvider<SceneElement[]>;
 
-    readonly elements: {
-        readonly fixtureKey: string;
-        readonly values: ValueSource[];
-    }[];
+
+export interface SceneElement {
+    readonly fixture: Fixtures.Fixture;
+    readonly values: ValueSource[];
 }
 
-type TransitionType = "Instant"|"Ease"|"Linear";
-export class Transition {
-    public readonly type: TransitionType;
-    public readonly duration: number;
+export interface Scene extends Model {
 
-    private constructor(type: TransitionType, duration: number) {
-        this.type = type;
-        this.duration = duration;
-    }
+    readonly elements: SceneElementsProvider;
+}
 
-    public static Instant(): Transition {
-        return new Transition("Instant", 0);
-    }
+export interface SceneCollection extends Model {
 
-    public static Ease(duration: number): Transition {
-        return new Transition("Ease", duration);
-    }
-
-    public static Linear(duration: number): Transition {
-        return new Transition("Linear", duration);
-    }
+    readonly scenes: Scene[];
 }
 
 
@@ -64,7 +52,20 @@ export class LightManager {
     private readonly _options: LightManagerOptions
 
     private readonly _firstAddress: number;
-    private readonly _buffer: Buffer;
+
+    private readonly _targetBuffer: Buffer;
+    private readonly _currentValues: number[];
+    private readonly _velocities: Velocity[];
+    private readonly _outBuffer: Buffer;
+
+    private _fade: number = 0.0;
+    public get fade(): number {
+        return this._fade;
+    }
+
+    public set fade(fade: number){
+        this._fade = fade;
+    }
 
     public constructor(lightingPlan: StageLightingPlan, openDmxDevice: OpenDmxDevice, options: Partial<LightManagerOptions>) {
         this._lightingPlan = lightingPlan;
@@ -75,31 +76,84 @@ export class LightManager {
             ...options
         };
 
-        const { minAdress, maxAdress } = this._lightingPlan.fixtures.reduce((previous, { address, chanNumber }) => {
-            
-            const minAdress = Math.min(previous.minAdress, address);
-            const maxAdress = Math.max(previous.maxAdress, address + chanNumber);
+        const { minAddress, maxAddress } = this._lightingPlan.fixtures.length > 0 ? 
+            this._lightingPlan
+                .fixtures
+                .reduce((previous, { address, chanNumber }) => {
+                    
+                    const minAddress = Math.min(previous.minAddress, address);
+                    const maxAddress = Math.max(previous.maxAddress, address + chanNumber);
 
-            return { minAdress, maxAdress };
+                    return { minAddress, maxAddress };
 
-        }, { minAdress: Number.MAX_VALUE, maxAdress: Number.MIN_VALUE });
+                }, { minAddress: Number.MAX_VALUE, maxAddress: Number.MIN_VALUE }) :
+            { minAddress: 0x00, maxAddress: 0xff };
 
-        this._firstAddress = minAdress;
-        this._buffer = Buffer.alloc(maxAdress - minAdress);
+
+        this._firstAddress = minAddress;
+
+        const addrCount = maxAddress - minAddress;
+
+        this._targetBuffer = Buffer.alloc(addrCount);
+        this._currentValues = Array(addrCount).fill(0);
+        this._velocities = Array(addrCount).fill(Velocity.zero);
+        this._outBuffer = Buffer.alloc(addrCount);
     }
 
     public get refreshRate(): number {
         return this._options.refreshRate;
     }
 
-    public async start() {
+    public get deltaTime(): number {
+        return 1000 / this.refreshRate;
+    }
+
+    public async start(): Promise<void> {
         await this._openDmxDevice.open();
         this.startSending();
     }
 
-    public async stop() {
+    public async stop(): Promise<void> {
         this.stopSending();
         await this._openDmxDevice.close();
+    }
+
+    public playScene(scene: Scene): void {
+
+        this.clearTargets();
+        const targets = this._targetBuffer;
+
+        const elements = getValue(scene.elements);
+        elements.forEach(({ fixture, values }) => {
+            
+            const mode = Fixtures.extractMode(fixture);
+            const chanMapping = Fixtures.getModeReverseMap(mode);
+
+            const fixtureAddress = fixture.address;
+            getValue(values)
+                .forEach(({ chan, value }) => {
+
+                    const position = chanMapping.get(chan);
+                    if (position) {
+                        
+                        if (Chans.isByteChannel(chan)) {
+                        
+                            const byte = getValue(value as ByteProvider);
+                            targets[fixtureAddress + position] = byte;
+                        }
+                        else if (Chans.isColorChannel(chan)) {
+    
+                            const color = getValue(value as ColorProvider);
+                            targets[fixtureAddress + position] = color.r;
+                            targets[fixtureAddress + position] = color.g;
+                            targets[fixtureAddress + position] = color.b;
+                        }
+                    }
+                    else {
+                        throw Error('Undefined position')
+                    }
+                });
+        })
     }
 
     private _loopbackInterval: NodeJS.Timeout|null = null;
@@ -109,10 +163,8 @@ export class LightManager {
     
     private startSending(): void {
         this._loopbackInterval = setInterval(async () => {
-
-            this._openDmxDevice.write(this._buffer, this._firstAddress);
-            await this._openDmxDevice.sendFrame();
-        }, 1000 / this.refreshRate)
+            await this.update();
+        }, this.deltaTime)
     }
 
     private stopSending(): void {
@@ -121,6 +173,36 @@ export class LightManager {
             clearInterval(this._loopbackInterval);
             this._loopbackInterval = null;
         }
+    }
+
+    private async update() {
+
+        const { 
+            _targetBuffer: targets,
+            _outBuffer: outBuffer,
+            _currentValues: currentValues,
+            _velocities: vels,
+
+            _firstAddress: firstAddress,
+            _openDmxDevice: openDmxDevice,
+            fade,
+            deltaTime
+        } = this;
+
+        const addrCount = targets.length;
+        for (let i = 0; i < addrCount; i++) {
+
+            const value = smoothDamp(currentValues[i], targets[i], vels[i], fade, deltaTime);
+            currentValues[i] = value;
+            outBuffer[i] = Math.round(value);
+        }
+
+        openDmxDevice.write(outBuffer, firstAddress);
+        await openDmxDevice.sendFrame();
+    }
+
+    private clearTargets(): void {
+        this._targetBuffer.fill(0);
     }
 
 }

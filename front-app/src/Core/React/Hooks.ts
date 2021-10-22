@@ -5,5 +5,5 @@ export const useEffectAsync = (effect: () => Promise<void>, deps?: DependencyLis
         (async () => {
             await effect();
         })();
-    }, deps);
+    }, deps); // eslint-disable-line
 }

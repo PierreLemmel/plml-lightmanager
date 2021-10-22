@@ -1,7 +1,9 @@
+import { byte, random01, randomByte } from "../../Core/Helpers/Mathf";
 import { uuid } from "../../Core/Helpers/Utils";
-import { FixtureModel, FixtureModelCollection, StageLightingPlan } from "./Dmx512";
+import { Color, Fixtures, StageLightingPlan } from "./Dmx512";
+import { SceneCollection, SceneElement } from "./LightManagement";
 
-const parLedRGBW: FixtureModel = {
+const parLedRGBWModel: Fixtures.FixtureModel = {
 
     name: "Par LED RGBW",
     key: uuid(),
@@ -21,7 +23,7 @@ const parLedRGBW: FixtureModel = {
     }
 }
 
-const parLedRGBUv: FixtureModel = {
+const parLedRGBUvModel: Fixtures.FixtureModel = {
 
     name: "Par LED RGBUv",
     key: uuid(),
@@ -42,7 +44,7 @@ const parLedRGBUv: FixtureModel = {
 }
 
 
-const flatParCW_WW_Amber: FixtureModel = {
+const flatParCW_WW_AmberModel: Fixtures.FixtureModel = {
 
     name: "FlatPar CW/WW/Amber",
     key: uuid(),
@@ -62,7 +64,7 @@ const flatParCW_WW_Amber: FixtureModel = {
     }
 }
 
-const parLedServoSharkCombi: FixtureModel = {
+const parLedServoSharkCombiModel: Fixtures.FixtureModel = {
 
     name: "ParLedServo Shark combi",
     key: uuid(),
@@ -82,79 +84,168 @@ const parLedServoSharkCombi: FixtureModel = {
     }
 }
 
-export const defaultModelCollection: FixtureModelCollection = {
+export const defaultModelCollectionModel: Fixtures.FixtureModelCollection = {
 
     name: "Improvibar",
+    key: uuid(),
     models: [
-        parLedRGBW,
-        parLedRGBUv,
-        flatParCW_WW_Amber,
-        parLedServoSharkCombi
+        parLedRGBWModel,
+        parLedRGBUvModel,
+        flatParCW_WW_AmberModel,
+        parLedServoSharkCombiModel
     ]
 };
 
 
+
+const parRgbJardinCour = {
+    name: "PAR RGB - Jardin/Cour",
+    key: uuid(),
+
+    address: 11,
+    model: parLedRGBWModel,
+    chanNumber: 6
+};
+
+const parRgbCourJardin = {
+    name: "PAR RGB - Cour/Jardin",
+    key: uuid(),
+
+    address: 17,
+    model: parLedRGBWModel,
+    chanNumber: 6
+};
+
+const parRgbContre1 = {
+    name: "PAR RGB - Contre 1",
+    key: uuid(),
+
+    address: 41,
+    model: parLedRGBWModel,
+    chanNumber: 6
+};
+
+const parRgbContre2 = {
+    name: "PAR RGB - Contre 2",
+    key: uuid(),
+
+    address: 35,
+    model: parLedRGBWModel,
+    chanNumber: 6
+};
+
+const parRgbContre3 = {
+    name: "PAR RGB - Contre 3",
+    key: uuid(),
+
+    address: 29,
+    model: parLedRGBWModel,
+    chanNumber: 6
+};
+
+const parRgbContre4 = {
+    name: "PAR RGB - Contre 4",
+    key: uuid(),
+
+    address: 23,
+    model: parLedRGBWModel,
+    chanNumber: 6
+};
+
+const parLedJardinCour = {
+    name: "PAR LED - Jardin/Cour",
+    key: uuid(),
+
+    address: 5,
+    model: flatParCW_WW_AmberModel,
+    chanNumber: 4
+};
+
+const parLedCourJardin = {
+    name: "PAR LED - Cour/Jardin",
+    key: uuid(),
+
+    address: 1,
+    model: flatParCW_WW_AmberModel,
+    chanNumber: 4
+};
+
+const parLedServoCour = {
+    name: "PAR Led Servo - Cour",
+    key: uuid(),
+
+    address: 53,
+    model: parLedServoSharkCombiModel,
+    chanNumber: 20
+};
+
 export const improvibarLightingPlan: StageLightingPlan = {
 
     name: "Improvibar",
+    key: uuid(),
+
     fixtures: [
+        parRgbJardinCour,
+        parRgbCourJardin,
+        parRgbContre1,
+        parRgbContre2,
+        parRgbContre3,
+        parRgbContre4,
+        parLedJardinCour,
+        parLedCourJardin,
+        parLedServoCour
+    ]
+}
 
-        {
-            name: "PAR RGB - Jardin/Cour",
-            address: 11,
-            model: parLedRGBW,
-            chanNumber: 6
-        },
-        {
-            name: "PAR RGB - Cour/Jardin",
-            address: 17,
-            model: parLedRGBW,
-            chanNumber: 6
-        },
+const ledElements = (color: Color, dimmer: byte): SceneElement[] => {
 
-        {
-            name: "PAR RGB - Contre 1",
-            address: 41,
-            model: parLedRGBW,
-            chanNumber: 6
-        },
-        {
-            name: "PAR RGB - Contre 2",
-            address: 35,
-            model: parLedRGBW,
-            chanNumber: 6
-        },
-        {
-            name: "PAR RGB - Contre 3",
-            address: 29,
-            model: parLedRGBW,
-            chanNumber: 6
-        },
-        {
-            name: "PAR RGB - Contre 4",
-            address: 23,
-            model: parLedRGBW,
-            chanNumber: 6
-        },
+    return [
+        parRgbJardinCour,
+        parRgbCourJardin,
+        parRgbContre1,
+        parRgbContre2,
+        parRgbContre3,
+        parRgbContre4
+    ].map(fixture => {
 
-        {
-            name: "PAR LED - Jardin/Cour",
-            address: 5,
-            model: flatParCW_WW_Amber,
-            chanNumber: 4
-        },
-        {
-            name: "PAR LED - Cour/Jardin",
-            address: 1,
-            model: flatParCW_WW_Amber,
-            chanNumber: 4
-        },
+        return {
+            fixture,
+            values: [
+                {
+                    chan: "Color",
+                    value: Color.white
+                },
+                {
+                    chan: "Dimmer",
+                    value: dimmer
+                }
+            ]
+        }
+    })
+}
 
+export const rngSceneCollection: SceneCollection = {
+    name: "RNG Scenes",
+    key: uuid(),
+
+    scenes: [
         {
-            name: "PAR Led Servo - Cour",
-            address: 53,
-            model: parLedServoSharkCombi,
-            chanNumber: 20
+            name: "White",
+            key: uuid(),
+
+            elements: ledElements(Color.white, 0xff)
+        },
+        {
+            name: "Random Color",
+            key: uuid(),
+
+            elements: () => {
+
+                const color = Color.hsl(random01(), 1.0, 0.5);
+                const dimmer = randomByte(200);
+
+                return ledElements(color, dimmer);
+            }
         }
     ]
 }

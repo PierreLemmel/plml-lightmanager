@@ -1,25 +1,22 @@
 import { useState } from 'react';
-import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 import './App.css';
 import SerialControl from './Components/Dmx/SerialControl';
-import ShowControl from './Pages/ShowControl';
 import { useEffectAsync } from './Core/React/Hooks';
 import { Enttec, OpenDmxDevice } from './Services/Dmx/OpenDmx';
 import { LightManagementContext, LightManagementContextProps } from './Components/Contexts/Contexts';
-import { improvibarLightingPlan } from './Services/Dmx/FixturesDatabase';
-import { LightManager, LightManagerOptions } from './Services/Dmx/LightManagement';
+import { LightManager, LightManagerOptions, SceneCollection } from './Services/Dmx/LightManagement';
 import { StageLightingPlan } from './Services/Dmx/Dmx512';
+import AppRouting from './AppRouting';
+import { uuid } from './Core/Helpers/Utils';
+import { improvibarLightingPlan, rngSceneCollection } from './Services/Dmx/FixturesDatabase';
 
 const App = () => {
 
     const [device, setDevice] = useState<OpenDmxDevice|null>(null);
     const [lightManager, setLightManager] = useState<LightManager|null>(null);
-    const [lightingPlan, setLightingPlan] = useState<StageLightingPlan>({
-        name: "UNINITIALIZED",
-        fixtures: [
-
-        ]
-    });
+    const [fade, setFade] = useState<number>(0.0);
+    const [lightingPlan, setLightingPlan] = useState<StageLightingPlan>(improvibarLightingPlan);
+    const [sceneCollection, setSceneCollection] = useState<SceneCollection>(rngSceneCollection);
 
     const getLightManagerOptions = (): Partial<LightManagerOptions> => {
         return {
@@ -41,7 +38,7 @@ const App = () => {
 
         if (device) {
             const newLightManager = new LightManager(newPlan, device, getLightManagerOptions())
-            setLightManager
+            setLightManager(newLightManager);
         }
     }
 
@@ -54,7 +51,7 @@ const App = () => {
         if (ports) {
             const enttecPort = ports.find(Enttec.isEnttecOpenDmx);
             if (enttecPort) {
-                setDevice(new OpenDmxDevice(enttecPort));
+                onPortSelected(enttecPort);
             }
         }
 
@@ -85,7 +82,13 @@ const App = () => {
         setPortOpened(device.opened);
     }
 
-    
+    const onFadeSet = (fade: number) => {
+        
+        if (lightManager) {
+            lightManager.fade = fade;
+        }
+        setFade(fade);
+    }
 
     const lightManagementContext: LightManagementContextProps = {
         openDmx: {
@@ -100,27 +103,25 @@ const App = () => {
     
             canStop,
             stop,
+
+            fade,
+            setFade: onFadeSet
         },
         setup: {
             lightingPlan: lightingPlan
-        }
+        },
+        scenes: sceneCollection
     }
 
-    const onSerialPortSelected = (port: SerialPort) => setDevice(new OpenDmxDevice(port));
-
     return <div>
-        {!device && <SerialControl onSerialPortSelected={onSerialPortSelected} />}
+        {!device && <SerialControl onSerialPortSelected={onPortSelected} />}
 
         <LightManagementContext.Provider value={lightManagementContext}>
 
-            <BrowserRouter>
-                <Switch>
-                    <Route exact path={["/", "/show"]} component={ShowControl} />
-                    <Redirect to="/" />
-                </Switch>
-            </BrowserRouter>
+            <AppRouting />
 
         </LightManagementContext.Provider>
     </div>;
 }
+
 export default App;

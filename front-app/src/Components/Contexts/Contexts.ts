@@ -1,5 +1,7 @@
 import React from "react";
+import { number01 } from "../../Core/Helpers/Mathf";
 import { uuid } from "../../Core/Helpers/Utils";
+import { AudioElement, AudioElementsCollection } from "../../Services/Audio/AudioManagement";
 import { StageLightingPlan } from "../../Services/Dmx/Dmx512";
 import { Scene, SceneCollection } from "../../Services/Dmx/LightManagement";
 
@@ -72,6 +74,46 @@ export const LightManagementContext = React.createContext<LightManagementContext
 
         scenes: [
             
+        ]
+    }
+})
+
+
+
+export interface AudioManagementContextProps {
+
+    readonly audioManagement: {
+
+        readonly volume: number01;
+        readonly setVolume: (volume: number01) => void;
+        
+        readonly isPlaying: boolean;
+        readonly play: (audio: AudioElement) => void;
+        readonly currentAudio?: AudioElement;
+        
+        readonly stop: () => void;
+    },
+
+    library: AudioElementsCollection
+}
+
+export const AudioManagementContext = React.createContext<AudioManagementContextProps>({
+    
+    audioManagement: {
+
+        volume: 1.0,
+        setVolume: () => {},
+        isPlaying: false,
+        play: () => { },
+        stop: () => { }
+    },
+
+    library: {
+        name: "UNINITALIZED",
+        key: uuid(),
+        
+        clips: [
+
         ]
     }
 })

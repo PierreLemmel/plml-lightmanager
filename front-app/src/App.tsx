@@ -3,12 +3,13 @@ import './App.css';
 import SerialControl from './Components/Dmx/SerialControl';
 import { useEffectAsync } from './Core/React/Hooks';
 import { Enttec, OpenDmxDevice } from './Services/Dmx/OpenDmx';
-import { LightManagementContext, LightManagementContextProps } from './Components/Contexts/Contexts';
+import { AudioManagementContext, AudioManagementContextProps, LightManagementContext, LightManagementContextProps } from './Components/Contexts/Contexts';
 import { LightManager, LightManagerOptions, Scene, SceneCollection } from './Services/Dmx/LightManagement';
 import { StageLightingPlan } from './Services/Dmx/Dmx512';
 import AppRouting from './AppRouting';
-import { uuid } from './Core/Helpers/Utils';
 import { improvibarLightingPlan, rngSceneCollection } from './Services/Dmx/FixturesDatabase';
+import { AudioElement, AudioElementsCollection, AudioPlayer } from './Services/Audio/AudioManagement';
+import { rngAudioElements } from './Services/Audio/AudioDatabase';
 
 const App = () => {
 
@@ -119,13 +120,53 @@ const App = () => {
         sceneCollection: sceneCollection
     }
 
+
+    const [audioPlayer] = useState<AudioPlayer>(new AudioPlayer());
+    const [volume, setVolume] = useState<number>(1.0);
+    const [currentAudio, setCurrentAudio] = useState<AudioElement>();
+    const [audioLibrary, setAudioLibrary] = useState<AudioElementsCollection>(rngAudioElements);
+
+    const playAudio = (audio: AudioElement) => {
+        setCurrentAudio(audio);
+        audioPlayer.play(audio.src);
+    };
+
+    const stopAudio = () => {
+        setCurrentAudio(undefined);
+        audioPlayer.stop();
+    }
+
+    const onSetVolume = (volume: number) => {
+        setVolume(volume);
+        audioPlayer.setVolume(volume);
+    }
+
+    const isAudioPlaying = currentAudio !== undefined;
+
+    const audioManagementContext: AudioManagementContextProps = {
+
+        audioManagement: {
+
+            volume,
+            setVolume: onSetVolume,
+            isPlaying: isAudioPlaying,
+            play: playAudio,
+            currentAudio,
+            stop: stopAudio
+        },
+
+        library: audioLibrary
+    }
+
     return <div>
         {!device && <SerialControl onSerialPortSelected={onPortSelected} />}
 
         <LightManagementContext.Provider value={lightManagementContext}>
+        <AudioManagementContext.Provider value={audioManagementContext}>
 
             <AppRouting />
 
+        </AudioManagementContext.Provider>
         </LightManagementContext.Provider>
     </div>;
 }

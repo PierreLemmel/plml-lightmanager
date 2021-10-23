@@ -31,6 +31,10 @@ export class Color {
         return Color.rgb(0xff, 0xff, 0xff);
     }
 
+    public static get warmWhite(): Color {
+        return Color.rgb(255, 152, 52);
+    }
+
     public static rgb(r: byte, g: byte, b: byte): Color {
         return new Color(r, g, b);
     }

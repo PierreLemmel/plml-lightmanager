@@ -1,7 +1,7 @@
 import React from "react";
 import { uuid } from "../../Core/Helpers/Utils";
 import { StageLightingPlan } from "../../Services/Dmx/Dmx512";
-import { SceneCollection } from "../../Services/Dmx/LightManagement";
+import { Scene, SceneCollection } from "../../Services/Dmx/LightManagement";
 
 
 export interface LightManagementContextProps {
@@ -22,13 +22,15 @@ export interface LightManagementContextProps {
 
         readonly fade: number;
         readonly setFade: (fade: number) => void;
+
+        readonly setScene: (scene: Scene) => void;
     },
 
     readonly setup: {
         readonly lightingPlan: StageLightingPlan;
     }
 
-    readonly scenes: SceneCollection;
+    readonly sceneCollection: SceneCollection;
 }
 
 export const LightManagementContext = React.createContext<LightManagementContextProps>({
@@ -47,7 +49,9 @@ export const LightManagementContext = React.createContext<LightManagementContext
         stop: () => Promise.resolve(),
 
         fade: 0.0,
-        setFade: (fade: number) => {}
+        setFade: (fade: number) => {},
+
+        setScene: (scene: Scene) => {},
     },
 
     setup: {
@@ -62,7 +66,7 @@ export const LightManagementContext = React.createContext<LightManagementContext
         }
     },
 
-    scenes: {
+    sceneCollection: {
         name: "UNINITIALIZED SCENE COLLECTION",
         key: uuid(),
 

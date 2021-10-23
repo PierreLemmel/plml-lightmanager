@@ -15,11 +15,13 @@ const FixturesDisplay = (props: FixturesDisplayProps) => <LightManagementContext
             <div className="text-2xl">Fixtures</div>
             {fixtures.length > 0 ? 
                 <AnyFixtures fixtures={fixtures} /> : 
-                <NoFixtures />}
+                <NoFixtures />
+            }
         </div>;
     }}
 
 </LightManagementContext.Consumer>
+
 
 interface FixturesProps {
     readonly fixtures: Fixtures.Fixture[];
@@ -51,6 +53,7 @@ const AnyFixtures = (props: FixturesProps) => <div className="flex flex-col">
         </div>;
     })}
 </div>;
+
 
 const NoFixtures = () => <div>No fixtures</div>;
 

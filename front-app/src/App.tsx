@@ -4,7 +4,7 @@ import SerialControl from './Components/Dmx/SerialControl';
 import { useEffectAsync } from './Core/React/Hooks';
 import { Enttec, OpenDmxDevice } from './Services/Dmx/OpenDmx';
 import { LightManagementContext, LightManagementContextProps } from './Components/Contexts/Contexts';
-import { LightManager, LightManagerOptions, SceneCollection } from './Services/Dmx/LightManagement';
+import { LightManager, LightManagerOptions, Scene, SceneCollection } from './Services/Dmx/LightManagement';
 import { StageLightingPlan } from './Services/Dmx/Dmx512';
 import AppRouting from './AppRouting';
 import { uuid } from './Core/Helpers/Utils';
@@ -20,7 +20,7 @@ const App = () => {
 
     const getLightManagerOptions = (): Partial<LightManagerOptions> => {
         return {
-
+            
         };
     }
 
@@ -90,6 +90,10 @@ const App = () => {
         setFade(fade);
     }
 
+    const setScene = (scene: Scene) => {
+        lightManager?.playScene(scene);
+    }
+
     const lightManagementContext: LightManagementContextProps = {
         openDmx: {
             hasSerial,
@@ -105,12 +109,14 @@ const App = () => {
             stop,
 
             fade,
-            setFade: onFadeSet
+            setFade: onFadeSet,
+
+            setScene,
         },
         setup: {
             lightingPlan: lightingPlan
         },
-        scenes: sceneCollection
+        sceneCollection: sceneCollection
     }
 
     return <div>

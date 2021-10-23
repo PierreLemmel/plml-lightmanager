@@ -57,13 +57,18 @@ export class OpenDmxDevice {
 
 
     public write(source: Buffer, offset: number) {
-        source.copy(this._buffer, offset);
+        
+        try {
+            source.copy(this._buffer, offset);
+        }
+        catch (e: unknown) {
+            console.warn(e);
+        }
     }
 
     
     public async sendFrame(): Promise<void> {
-
-        if (this._port.writable.locked) {
+        if (!this._port.writable || this._port.writable.locked) {
             return;
         }
 
@@ -75,5 +80,4 @@ export class OpenDmxDevice {
 
         writer.releaseLock();
     }
-
 }

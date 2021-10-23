@@ -96,7 +96,7 @@ export class LightManager {
 
         this._targetBuffer = Buffer.alloc(addrCount);
         this._currentValues = Array(addrCount).fill(0);
-        this._velocities = Array(addrCount).fill(Velocity.zero);
+        this._velocities = Array(addrCount).fill(Velocity.zero());
         this._outBuffer = Buffer.alloc(addrCount);
     }
 
@@ -105,7 +105,7 @@ export class LightManager {
     }
 
     public get deltaTime(): number {
-        return 1000 / this.refreshRate;
+        return 1.0 / this.refreshRate;
     }
 
     public async start(): Promise<void> {
@@ -121,7 +121,10 @@ export class LightManager {
     public playScene(scene: Scene): void {
 
         this.clearTargets();
-        const targets = this._targetBuffer;
+        const { 
+            _targetBuffer: targets,
+            _firstAddress: firstAddress
+        } = this;
 
         const elements = getValue(scene.elements);
         elements.forEach(({ fixture, values }) => {
@@ -129,24 +132,26 @@ export class LightManager {
             const mode = Fixtures.extractMode(fixture);
             const chanMapping = Fixtures.getModeReverseMap(mode);
 
-            const fixtureAddress = fixture.address;
+            const addr0 = fixture.address - firstAddress;
+            
             getValue(values)
                 .forEach(({ chan, value }) => {
 
                     const position = chanMapping.get(chan);
-                    if (position) {
+                    if (position !== undefined) {
                         
                         if (Chans.isByteChannel(chan)) {
                         
                             const byte = getValue(value as ByteProvider);
-                            targets[fixtureAddress + position] = byte;
+                            targets[addr0 + position] = byte;
                         }
                         else if (Chans.isColorChannel(chan)) {
     
                             const color = getValue(value as ColorProvider);
-                            targets[fixtureAddress + position] = color.r;
-                            targets[fixtureAddress + position] = color.g;
-                            targets[fixtureAddress + position] = color.b;
+                            
+                            targets[addr0 + position] = color.r;
+                            targets[addr0 + position + 1] = color.g;
+                            targets[addr0 + position + 2] = color.b;
                         }
                     }
                     else {
@@ -164,7 +169,7 @@ export class LightManager {
     private startSending(): void {
         this._loopbackInterval = setInterval(async () => {
             await this.update();
-        }, this.deltaTime)
+        }, 1000 * this.deltaTime)
     }
 
     private stopSending(): void {
@@ -189,15 +194,16 @@ export class LightManager {
             deltaTime
         } = this;
 
-        const addrCount = targets.length;
-        for (let i = 0; i < addrCount; i++) {
+        // const addrCount = targets.length;
+        // for (let i = 0; i < addrCount; i++) {
 
-            const value = smoothDamp(currentValues[i], targets[i], vels[i], fade, deltaTime);
-            currentValues[i] = value;
-            outBuffer[i] = Math.round(value);
-        }
+        //     const value = smoothDamp(currentValues[i], targets[i], vels[i], fade, deltaTime);
+        //     currentValues[i] = value;
+        //     outBuffer.writeUInt8(Math.floor(value), i);
+        // }
 
-        openDmxDevice.write(outBuffer, firstAddress);
+        // openDmxDevice.write(outBuffer, firstAddress);
+        openDmxDevice.write(targets, firstAddress);
         await openDmxDevice.sendFrame();
     }
 

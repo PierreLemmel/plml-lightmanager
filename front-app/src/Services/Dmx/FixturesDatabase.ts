@@ -1,4 +1,4 @@
-import { byte, random01, randomByte } from "../../Core/Helpers/Mathf";
+import { byte, random, random01, randomByte } from "../../Core/Helpers/Mathf";
 import { uuid } from "../../Core/Helpers/Utils";
 import { Color, Fixtures, StageLightingPlan } from "./Dmx512";
 import { SceneCollection, SceneElement } from "./LightManagement";
@@ -13,9 +13,9 @@ const parLedRGBWModel: Fixtures.FixtureModel = {
             name: "6 CH",
             chans: {
                 [0]: "Color",
-                [4]: "White",
-                [5]: "Dimmer",
-                [6]: "Stroboscope"
+                [3]: "White",
+                [4]: "Dimmer",
+                [5]: "Stroboscope"
             }
             
         }
@@ -54,9 +54,9 @@ const flatParCW_WW_AmberModel: Fixtures.FixtureModel = {
             name: "4 CH",
             chans: {
                 [0]: "Color",
-                [4]: "White",
-                [5]: "Dimmer",
-                [6]: "Stroboscope",
+                [3]: "White",
+                [4]: "Dimmer",
+                [5]: "Stroboscope",
             }
             
         }
@@ -197,7 +197,32 @@ export const improvibarLightingPlan: StageLightingPlan = {
     ]
 }
 
-const ledElements = (color: Color, dimmer: byte): SceneElement[] => {
+
+const faceLedElements = (color: Color, dimmer: byte): SceneElement[] => {
+
+    return [
+        parRgbJardinCour,
+        parRgbCourJardin,
+    ].map(fixture => {
+
+        return {
+            fixture,
+            values: [
+                {
+                    chan: "Color",
+                    value: color
+                },
+                {
+                    chan: "Dimmer",
+                    value: dimmer
+                }
+            ]
+        }
+    })
+};
+
+
+const allLedElements = (color: Color, dimmer: byte): SceneElement[] => {
 
     return [
         parRgbJardinCour,
@@ -213,7 +238,32 @@ const ledElements = (color: Color, dimmer: byte): SceneElement[] => {
             values: [
                 {
                     chan: "Color",
-                    value: Color.white
+                    value: color
+                },
+                {
+                    chan: "Dimmer",
+                    value: dimmer
+                }
+            ]
+        }
+    })
+}
+
+const contresLedElements = (color: Color, dimmer: byte): SceneElement[] => {
+
+    return [
+        parRgbContre1,
+        parRgbContre2,
+        parRgbContre3,
+        parRgbContre4
+    ].map(fixture => {
+
+        return {
+            fixture,
+            values: [
+                {
+                    chan: "Color",
+                    value: color
                 },
                 {
                     chan: "Dimmer",
@@ -229,11 +279,33 @@ export const rngSceneCollection: SceneCollection = {
     key: uuid(),
 
     scenes: [
+ 
         {
-            name: "White",
+            name: "Warm",
             key: uuid(),
 
-            elements: ledElements(Color.white, 0xff)
+            elements: () => {
+
+                const dimmer = random(160, 255);
+                return faceLedElements(Color.warmWhite, dimmer);
+            }
+        },
+        {
+            name: "Cold",
+            key: uuid(),
+
+            elements: allLedElements(Color.white, 0xff)
+        },
+        {
+            name: "Contres",
+            key: uuid(),
+
+            elements: () => {
+                const color = Color.hsl(random01(), 1.0, random(0.4, 0.6));
+                const dimmer = randomByte(50, 120);
+
+                return contresLedElements(color, dimmer);
+            }
         },
         {
             name: "Random Color",
@@ -241,11 +313,90 @@ export const rngSceneCollection: SceneCollection = {
 
             elements: () => {
 
-                const color = Color.hsl(random01(), 1.0, 0.5);
-                const dimmer = randomByte(200);
+                const color = Color.hsl(random01(), 1.0, random(0.4, 0.6));
+                const dimmer = randomByte(80, 255);
 
-                return ledElements(color, dimmer);
+                return allLedElements(color, dimmer);
             }
+        },
+        {
+            name: "Bicolor",
+            key: uuid(),
+
+            elements: () => {
+
+                const l = random(0.35, 0.65);
+                const h1 = random01();
+                const h2 = h1 > 0.5 ? h1 - 0.5 : h1 + 0.5;
+
+                const facesDimmer = randomByte(180, 255);
+
+                const contresDimmer = randomByte(20, 70);
+
+                const result = contresLedElements(Color.white, contresDimmer);
+                result.push(
+                    {
+                        fixture: parRgbCourJardin,
+                        values: [
+                            {
+                                chan: "Color",
+                                value: Color.hsl(h1, 1.0, l)
+                            },
+                            {
+                                chan: "Dimmer",
+                                value: facesDimmer
+                            }
+                        ]
+                    },
+                    {
+                        fixture: parRgbJardinCour,
+                        values: [
+                            {
+                                chan: "Color",
+                                value: Color.hsl(h2, 1.0, l)
+                            },
+                            {
+                                chan: "Dimmer",
+                                value: facesDimmer
+                            }
+                        ]
+                    },
+                );
+
+                return result;
+            }
+        },
+        {
+            name: "Douche",
+            key: uuid(),
+
+            elements: [
+                {
+                    fixture: parLedServoCour,
+                    values: [
+                        {
+                            chan: "Dimmer",
+                            value: 0xff
+                        },
+                        {
+                            chan: "Warm",
+                            value: 0xff
+                        },
+                        {
+                            chan: "Cold",
+                            value: 0xff
+                        },
+                        {
+                            chan: "Pan",
+                            value: 100
+                        },
+                        {
+                            chan: "Tilt",
+                            value: 100
+                        },
+                    ]
+                }
+            ]
         }
     ]
 }

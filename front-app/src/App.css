@@ -6,9 +6,7 @@
     @apply text-center font-bold;
     @apply m-1 py-2 px-4 rounded-full;
     @apply transition-colors duration-300;
-    
-
-    max-width: 160px;
+    @apply w-40;
 }
 
 .btn:hover {

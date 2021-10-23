@@ -2,6 +2,10 @@ export type byte = number;
 export type number01 = number;
 
 
+export function random(min: number, max: number): number {
+    return min + random01() * (max - min);
+}
+
 export function random01(): number01 {
     return Math.random();
 }
@@ -11,7 +15,7 @@ export function randomByte(min?: byte, max?: byte): byte {
     min = min ?? 0x00;
     max = max ?? 0xff;
 
-    return min + Math.round(random01() * (max - min));
+    return random(min, max);
 }
 
 export function clamp(value: number, min: number, max: number): number {

@@ -1,5 +1,5 @@
+import { Button } from "@mui/material";
 import { Enttec } from "../../Services/Dmx/OpenDmx";
-import { Button } from "../Core/Core";
 
 interface SerialControlProps {
     readonly onSerialPortSelected: (port: SerialPort) => void;

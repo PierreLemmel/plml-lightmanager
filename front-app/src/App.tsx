@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import './App.css';
-import SerialControl from './Components/Dmx/SerialControl';
 import { useEffectAsync } from './Core/React/Hooks';
 import { Enttec, OpenDmxDevice } from './Services/Dmx/OpenDmx';
 import { AudioManagementContext, AudioManagementContextProps, LightManagementContext, LightManagementContextProps } from './Components/Contexts/Contexts';
@@ -10,6 +9,8 @@ import AppRouting from './AppRouting';
 import { improvibarLightingPlan, rngSceneCollection } from './Services/Dmx/FixturesDatabase';
 import { AudioElement, AudioElementsCollection, AudioPlayer } from './Services/Audio/AudioManagement';
 import { rngAudioElements } from './Services/Audio/AudioDatabase';
+import Header from './Header';
+import Footer from './Footer';
 
 const App = () => {
 
@@ -158,16 +159,21 @@ const App = () => {
         library: audioLibrary
     }
 
-    return <div>
-        {!device && <SerialControl onSerialPortSelected={onPortSelected} />}
+    return <div className="app flex flex-col h-screen w-screen justify-between">
+        <Header />
 
-        <LightManagementContext.Provider value={lightManagementContext}>
-        <AudioManagementContext.Provider value={audioManagementContext}>
+        <main className="flex-auto">
+            <LightManagementContext.Provider value={lightManagementContext}>
+            <AudioManagementContext.Provider value={audioManagementContext}>
 
-            <AppRouting />
+                <AppRouting />
 
-        </AudioManagementContext.Provider>
-        </LightManagementContext.Provider>
+            </AudioManagementContext.Provider>
+            </LightManagementContext.Provider>
+            
+        </main>
+        
+        <Footer />
     </div>;
 }
 

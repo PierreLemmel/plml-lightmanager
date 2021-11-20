@@ -78,8 +78,6 @@ export const LightManagementContext = React.createContext<LightManagementContext
     }
 })
 
-
-
 export interface AudioManagementContextProps {
 
     readonly audioManagement: {

@@ -1,6 +1,5 @@
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
-import RngShow from './Pages/RngShow';
-import ShowControl from './Pages/ShowControl';
+import TestFirebase from './Pages/TestFirebase';
 
 interface AppRoutingProps {
 
@@ -8,8 +7,7 @@ interface AppRoutingProps {
 
 const AppRouting = (props: AppRoutingProps) => <BrowserRouter>
     <Switch>
-        <Route exact path={["/", "/show"]} component={ShowControl} />
-        <Route exact path="/rng" component={RngShow} />
+        <Route exact path={["/"]} component={TestFirebase} />
         <Redirect to="/" />
     </Switch>
 </BrowserRouter>

@@ -10,11 +10,5 @@ export const rngAudioElements: AudioElementsCollection = {
     name: "RNG Audio",
     key: uuid(),
 
-    clips: rngTitles.map(title => {
-        return {
-            name: title,
-            key: uuid(),
-            src: require(`../../Data/Audio/${title}.mp3`).default
-        }
-    })
+    clips: []
 }

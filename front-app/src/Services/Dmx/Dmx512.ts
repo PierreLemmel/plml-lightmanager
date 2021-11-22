@@ -82,6 +82,7 @@ export class Color {
     }
 }
 
+
 export module Chans {
 
     const byteChannelTypes = [
@@ -118,10 +119,9 @@ export module Chans {
 
 export module Fixtures {
 
-    export interface FixtureMode {
+    export interface FixtureMode extends Model {
 
-        readonly name: string;
-        readonly chans: {
+        readonly channels: {
             readonly [position: number]: Chans.ChannelType;
         }
     }
@@ -129,18 +129,25 @@ export module Fixtures {
     
     export interface FixtureModel extends Model {
     
-        readonly modes: {
-    
-            readonly [chanCount: number]: FixtureMode;
-        }
+        readonly manufacturer: string;
+        readonly type: string;
+
+        readonly channels: Channel[];
+        readonly modes: FixtureMode[];
+    }
+
+
+    export interface Channel extends Model {
+        readonly type: Chans.ChannelType;
     }
     
     
     export interface FixtureModelCollection extends Model {
     
-        readonly models: FixtureModel[];
+        readonly fixtureModels: FixtureModel[];
     }
     
+
     export interface Fixture extends Model {
     
         readonly address: number;
@@ -155,7 +162,7 @@ export module Fixtures {
 
     export function getModeReverseMap(mode: FixtureMode): Map<Chans.ChannelType, number> {
 
-        const chans = mode.chans;
+        const chans = mode.channels;
 
         const result = new Map<Chans.ChannelType, number>(
             Object.keys(chans).map((key) => {

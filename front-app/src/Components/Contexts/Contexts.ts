@@ -1,6 +1,5 @@
 import React from "react";
 import { number01 } from "../../Core/Helpers/Mathf";
-import { uuid } from "../../Core/Helpers/Utils";
 import { AudioElement, AudioElementsCollection } from "../../Services/Audio/AudioManagement";
 import { StageLightingPlan } from "../../Services/Dmx/Dmx512";
 import { Scene, SceneCollection } from "../../Services/Dmx/LightManagement";
@@ -60,8 +59,6 @@ export const LightManagementContext = React.createContext<LightManagementContext
         
         lightingPlan: {
             name: "UNINITIALIZED LIGHTING PLAN",
-            key: uuid(),
-            
             fixtures: [
                 
             ]
@@ -70,8 +67,6 @@ export const LightManagementContext = React.createContext<LightManagementContext
 
     sceneCollection: {
         name: "UNINITIALIZED SCENE COLLECTION",
-        key: uuid(),
-
         scenes: [
             
         ]
@@ -107,9 +102,7 @@ export const AudioManagementContext = React.createContext<AudioManagementContext
     },
 
     library: {
-        name: "UNINITALIZED",
-        key: uuid(),
-        
+        name: "UNINITALIZED",       
         clips: [
 
         ]

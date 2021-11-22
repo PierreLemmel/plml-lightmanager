@@ -21,7 +21,7 @@ const Header = () => {
 };
 
 const UserSignedIn = (props: { user: UserInfo}) => <div className="m-2 w-[3.5em]">
-    <img className="rounded-full" src={props.user.photoURL!}/>
+    <img className="rounded-full" src={props.user.photoURL!} alt="user-profile-picture"/>
 </div>;
 
 const NotLoggedIn = () => <Button onClick={async () => await googleSignIn()}>Se connecter</Button>;

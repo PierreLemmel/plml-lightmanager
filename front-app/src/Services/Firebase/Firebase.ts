@@ -1,7 +1,8 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc } from 'firebase/firestore';
+import { getFirestore, doc, FirestoreError } from 'firebase/firestore';
 import { Auth, getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { useDocument } from "react-firebase-hooks/firestore";
 
 
 const firebaseConfig = {
@@ -43,6 +44,19 @@ export const userSignOut = async () => {
 
 const firestore = getFirestore(app);
 
-export const getDocument = (path: string) => {
+const getDocument = (path: string) => {
     return doc(firestore, path);
+}
+
+export function usePublicData<T>(path: string): [T|undefined, boolean, FirestoreError|undefined] {
+
+    const [docData, loading, error] = useDocument(getDocument(path));
+
+    let result: T|undefined;
+    if (docData) {
+        const unknownData: unknown = docData?.data(); 
+        result = unknownData as T;
+    }
+
+    return [result, loading, error];
 }

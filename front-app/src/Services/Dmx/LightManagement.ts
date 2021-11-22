@@ -1,4 +1,4 @@
-import { byte, smoothDamp, Velocity } from '../../Core/Helpers/Mathf';
+import { byte, Velocity } from '../../Core/Helpers/Mathf';
 import { getValue, ValueProvider } from '../../Core/Helpers/Utils';
 import { Model } from '../../Core/Models/Models';
 import { Chans, Color, Fixtures, StageLightingPlan } from './Dmx512';

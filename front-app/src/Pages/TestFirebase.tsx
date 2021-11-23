@@ -2,7 +2,7 @@ import { Fixtures } from '../Services/Dmx/Dmx512';
 import { useAuth, usePublicData } from '../Services/Firebase/Firebase';
 
 type Dmx512Data = {
-    readonly fixtureModels: Fixtures.FixtureModel[];
+    readonly fixtureModels: Fixtures.FixtureModelDefinition[];
 }
 
 const ShowControl = () => {

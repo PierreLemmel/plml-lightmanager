@@ -119,7 +119,7 @@ export module Chans {
 
 export module Fixtures {
 
-    export interface FixtureMode extends Model {
+    export interface FixtureModeDefinition extends Model {
 
         readonly channels: {
             readonly [position: number]: Chans.ChannelType;
@@ -127,40 +127,40 @@ export module Fixtures {
     }
     
     
-    export interface FixtureModel extends Model {
+    export interface FixtureModelDefinition extends Model {
     
         readonly manufacturer: string;
         readonly type: string;
 
-        readonly channels: Channel[];
-        readonly modes: FixtureMode[];
+        readonly channels: ChannelDefinition[];
+        readonly modes: FixtureModeDefinition[];
     }
 
 
-    export interface Channel extends Model {
+    export interface ChannelDefinition extends Model {
         readonly type: Chans.ChannelType;
     }
     
     
     export interface FixtureModelCollection extends Model {
     
-        readonly fixtureModels: FixtureModel[];
+        readonly fixtureModels: FixtureModelDefinition[];
     }
     
 
     export interface Fixture extends Model {
     
         readonly address: number;
-        readonly model: FixtureModel;
+        readonly model: FixtureModelDefinition;
         readonly chanNumber: number;
         readonly remarks?: string;
     }
 
-    export function extractMode({ model, chanNumber }: Fixture): FixtureMode {
+    export function extractMode({ model, chanNumber }: Fixture): FixtureModeDefinition {
         return model.modes[chanNumber];
     }
 
-    export function getModeReverseMap(mode: FixtureMode): Map<Chans.ChannelType, number> {
+    export function getModeReverseMap(mode: FixtureModeDefinition): Map<Chans.ChannelType, number> {
 
         const chans = mode.channels;
 
